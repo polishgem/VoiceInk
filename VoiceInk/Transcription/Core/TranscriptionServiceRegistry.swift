@@ -85,6 +85,8 @@ class TranscriptionServiceRegistry {
             return model.name == "stt-rt-v4"
         case .parakeet:
             return UserDefaults.standard.object(forKey: "parakeet-streaming-enabled") as? Bool ?? true
+        case .funASR:
+            return model.name == "funasr-2pass"
         default:
             return false
         }

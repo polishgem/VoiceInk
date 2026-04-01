@@ -12,7 +12,7 @@ enum ModelProvider: String, Codable, Hashable, CaseIterable {
     case soniox = "Soniox"
     case custom = "Custom"
     case nativeApple = "Native Apple"
-    // Future providers can be added here
+    case funASR = "FunASR"
 }
 
 // A unified protocol for any transcription model

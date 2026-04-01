@@ -21,9 +21,13 @@ struct CloudModelCardView: View {
     }
     
     private var isConfigured: Bool {
+        if model.provider == .funASR {
+            // FunASR is always configured (defaults to localhost)
+            return true
+        }
         return APIKeyManager.shared.hasAPIKey(forProvider: providerKey)
     }
-    
+
     private var providerKey: String {
         switch model.provider {
         case .groq:
@@ -38,6 +42,8 @@ struct CloudModelCardView: View {
             return "Gemini"
         case .soniox:
             return "Soniox"
+        case .funASR:
+            return "FunASR"
         default:
             return model.provider.rawValue
         }
@@ -216,15 +222,65 @@ struct CloudModelCardView: View {
     
     private var configurationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if model.provider == .funASR {
+                funASRConfigurationSection
+            } else {
+                apiKeyConfigurationSection
+            }
+        }
+    }
+
+    private var funASRConfigurationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Server Configuration")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Color(.labelColor))
+
+            HStack(spacing: 8) {
+                TextField("WebSocket URL (e.g. ws://127.0.0.1:10095)", text: $apiKey)
+                    .textFieldStyle(.roundedBorder)
+
+                Button(action: {
+                    let url = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                    FunASRStreamingProvider.saveServerURL(url)
+                    verificationStatus = .success
+                    isConfiguredState = true
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isExpanded = false
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("Save")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color(.controlAccentColor)))
+                }
+                .buttonStyle(.plain)
+                .disabled(apiKey.isEmpty)
+            }
+
+            Text("Default: ws://127.0.0.1:10095 — FunASR server must be running")
+                .font(.caption)
+                .foregroundColor(Color(.secondaryLabelColor))
+        }
+    }
+
+    private var apiKeyConfigurationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text("API Key Configuration")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
-            
+
             HStack(spacing: 8) {
                 SecureField("Enter your \(model.provider.rawValue) API key", text: $apiKey)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isVerifying)
-                
+
                 Button(action: verifyAPIKey) {
                     HStack(spacing: 4) {
                         if isVerifying {
@@ -249,7 +305,7 @@ struct CloudModelCardView: View {
                 .buttonStyle(.plain)
                 .disabled(apiKey.isEmpty || isVerifying)
             }
-            
+
             if verificationStatus == .failure {
                 if let error = verificationError {
                     Text(error)
@@ -269,6 +325,11 @@ struct CloudModelCardView: View {
     }
     
     private func loadSavedAPIKey() {
+        if model.provider == .funASR {
+            apiKey = FunASRStreamingProvider.resolvedServerURL()
+            verificationStatus = .success
+            return
+        }
         if let savedKey = APIKeyManager.shared.getAPIKey(forProvider: providerKey) {
             apiKey = savedKey
             verificationStatus = .success
@@ -325,6 +386,16 @@ struct CloudModelCardView: View {
     }
     
     private func clearAPIKey() {
+        if model.provider == .funASR {
+            FunASRStreamingProvider.saveServerURL("")
+            apiKey = FunASRStreamingProvider.defaultServerURL
+            verificationStatus = .success
+            isConfiguredState = true
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isExpanded = false
+            }
+            return
+        }
         APIKeyManager.shared.deleteAPIKey(forProvider: providerKey)
         apiKey = ""
         verificationStatus = .none

@@ -339,6 +339,18 @@ import Foundation
             accuracy: 0.97,
             isMultilingual: true,
             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .soniox)
+        ),
+
+        // FunASR Models (self-hosted)
+        CloudModel(
+            name: "funasr-2pass",
+            displayName: "FunASR Realtime (2pass)",
+            description: "Self-hosted FunASR real-time streaming with 2-pass correction for high accuracy",
+            provider: .funASR,
+            speed: 0.95,
+            accuracy: 0.96,
+            isMultilingual: true,
+            supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .funASR)
         )
      ]
  

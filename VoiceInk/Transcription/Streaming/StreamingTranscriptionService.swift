@@ -181,6 +181,8 @@ class StreamingTranscriptionService {
                 fatalError("ParakeetTranscriptionService required for Parakeet streaming. Ensure it is passed to StreamingTranscriptionService.")
             }
             return ParakeetStreamingProvider(parakeetService: parakeetService)
+        case .funASR:
+            return FunASRStreamingProvider(modelContext: modelContext)
         default:
             fatalError("Unsupported streaming provider: \(model.provider). Check supportsStreaming() before calling startStreaming().")
         }
